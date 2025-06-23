@@ -1,10 +1,11 @@
-﻿import { useEffect, useState } from "react";
+﻿// src/features/pages/Home.tsx
+import { useEffect, useState } from "react";
 import { fetchMovies } from "@/features/movies/api/moviesApi";
 import { SearchBar } from "@/features/movies/components/SearchBar";
 import { MovieList } from "@/features/movies/components/MovieList";
 import type { Movie } from "@/features/movies/types/movie";
 import { useDebounce } from "@/lib/useDebounce";
-import {Loader2} from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
     const [movies, setMovies] = useState<Movie[]>([]);
@@ -14,7 +15,7 @@ export default function Home() {
 
     const debouncedQuery = useDebounce(query, 500);
 
-    // 🔁 Executa a busca automaticamente ao parar de digitar
+    // 🔁 Executa busca automática ao parar de digitar
     useEffect(() => {
         if (debouncedQuery.trim().length >= 3) {
             handleSearch(debouncedQuery);
@@ -23,17 +24,15 @@ export default function Home() {
         }
     }, [debouncedQuery]);
 
-    const handleSearch = async (query: string) => {
+    const handleSearch = async (search: string) => {
         try {
             setLoading(true);
             setError(null);
 
-            const fetchPromise = fetchMovies(query);
-            const delayPromise = new Promise((res) => setTimeout(res, 500)); // delay mínimo
+            const fetchPromise = fetchMovies(search);
+            const delayPromise = new Promise((res) => setTimeout(res, 500)); // mínimo 500ms
 
             const [results] = await Promise.all([fetchPromise, delayPromise]);
-
-            console.log("Filmes retornados:", results);
             setMovies(results as Movie[]);
         } catch (err) {
             console.error("Erro na busca:", err);
@@ -55,13 +54,13 @@ export default function Home() {
                 </div>
             )}
 
-            {error && <p className="text-center mt-4 text-red-500">{error}</p>}
+            {error && (
+                <p className="text-center mt-4 text-red-500">{error}</p>
+            )}
 
             {!loading && !error && movies.length > 0 && (
                 <>
-                    <h2 className="text-xl font-semibold text-center my-6">
-                        Resultados:
-                    </h2>
+                    <h2 className="text-xl font-semibold text-center my-6">Resultados:</h2>
                     <MovieList movies={movies} />
                 </>
             )}

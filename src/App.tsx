@@ -1,6 +1,13 @@
 // src/App.tsx
-import Home from "@/pages/Home";
+import { Routes, Route } from "react-router-dom";
+import Home from "@/features/movies/pages/Home.tsx";
+import { MovieDetail } from "@/features/movies/pages/MovieDetail.tsx";
 
 export default function App() {
-    return <Home />;
+    return (
+        <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/movie/:id" element={<MovieDetail />} />
+        </Routes>
+    );
 }
