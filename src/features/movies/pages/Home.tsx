@@ -5,6 +5,7 @@ import {MovieList} from "@/features/movies/components/MovieList";
 import type {Movie} from "@/features/movies/types/movie";
 import {useDebounce} from "@/lib/useDebounce";
 import {Loader2} from "lucide-react";
+import { ThemeToggle } from "../components/ThemeToggle";
 export default function Home() {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [page, setPage] = useState(1);
@@ -68,7 +69,10 @@ export default function Home() {
     };
 
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen px-4 py-10">
+        <main className="bg-background text-foreground flex flex-col items-center justify-center min-h-screen px-4 py-10">
+            <div className="absolute top-4 right-4 z-10">
+                <ThemeToggle />
+            </div>
             <div className="w-full max-w-md mb-6 text-center">
                 <h1 className="text-4xl font-bold flex justify-center items-center gap-2 mb-4">🎬 Movie Explorer</h1>
                 <SearchBar value={query} onChange={setQuery} />
