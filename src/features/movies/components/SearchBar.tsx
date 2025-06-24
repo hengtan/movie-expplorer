@@ -8,11 +8,12 @@ interface Props {
 
 export function SearchBar({ value, onChange }: Props) {
     return (
-        <div className="flex gap-2 items-center w-full max-w-xl mx-auto my-4">
+        <div className="w-full max-w-md mx-auto my-4">
             <Input
-                placeholder="Search for a movie..."
+                placeholder="Busque um filme... (mínimo 3 letras)"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                className="w-full text-center"
             />
         </div>
     );
