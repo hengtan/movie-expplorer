@@ -5,8 +5,11 @@ import {MovieList} from "@/features/movies/components/MovieList";
 import type {Movie} from "@/features/movies/types/movie";
 import {useDebounce} from "@/lib/useDebounce";
 import {Loader2} from "lucide-react";
-import { ThemeToggle } from "../components/ThemeToggle";
+import {ThemeToggle} from "../components/ThemeToggle";
+import { motion } from "framer-motion";
+
 export default function Home() {
+
     const [movies, setMovies] = useState<Movie[]>([]);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -41,7 +44,7 @@ export default function Home() {
                     loadMovies(debouncedQuery, page + 1);
                 }
             },
-            { threshold: 1 }
+            {threshold: 1}
         );
 
         observer.observe(sentinelRef.current);
@@ -52,7 +55,7 @@ export default function Home() {
         try {
             setLoading(true);
             const delay = new Promise((res) => setTimeout(res, 500));
-            const [{ results, total }] = await Promise.all([
+            const [{results, total}] = await Promise.all([
                 fetchMovies(search, pageToLoad),
                 delay,
             ]);
@@ -69,32 +72,41 @@ export default function Home() {
     };
 
     return (
-        <main className="bg-background text-foreground flex flex-col items-center justify-center min-h-screen px-4 py-10">
-            <div className="absolute top-4 right-4 z-10">
-                <ThemeToggle />
-            </div>
-            <div className="w-full max-w-md mb-6 text-center">
-                <h1 className="text-4xl font-bold flex justify-center items-center gap-2 mb-4">🎬 Movie Explorer</h1>
-                <SearchBar value={query} onChange={setQuery} />
-            </div>
-
-            {error && <p className="text-red-500">{error}</p>}
-
-            <MovieList movies={movies} />
-
-            {loading && (
-                <div className="my-6">
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <motion.main
+            initial={{opacity: 0, y: 20}}
+            animate={{opacity: 1, y: 0}}
+            exit={{opacity: 0, y: -20}}
+            transition={{duration: 0.3}}
+            className="flex flex-col items-center justify-center min-h-screen px-4 py-10"
+        >
+            <main
+                className="bg-background text-foreground flex flex-col items-center justify-center min-h-screen px-4 py-10">
+                <div className="absolute top-4 right-4 z-10">
+                    <ThemeToggle/>
                 </div>
-            )}
+                <div className="w-full max-w-md mb-6 text-center">
+                    <h1 className="text-4xl font-bold flex justify-center items-center gap-2 mb-4">🎬 Movie Explorer</h1>
+                    <SearchBar value={query} onChange={setQuery}/>
+                </div>
 
-            {/* Mostrar aviso quando acabar os resultados */}
-            {!hasMore && !loading && movies.length > 0 && (
-                <p className="text-center mt-4 text-muted-foreground">Fim dos resultados.</p>
-            )}
+                {error && <p className="text-red-500">{error}</p>}
 
-            {/* Ref do scroll infinito */}
-            <div ref={sentinelRef} className="h-10" />
-        </main>
+                <MovieList movies={movies}/>
+
+                {loading && (
+                    <div className="my-6">
+                        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground"/>
+                    </div>
+                )}
+
+                {/* Mostrar aviso quando acabar os resultados */}
+                {!hasMore && !loading && movies.length > 0 && (
+                    <p className="text-center mt-4 text-muted-foreground">Fim dos resultados.</p>
+                )}
+
+                {/* Ref do scroll infinito */}
+                <div ref={sentinelRef} className="h-10"/>
+            </main>
+        </motion.main>
     );
 }

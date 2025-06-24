@@ -1,21 +1,34 @@
-﻿// src/features/movies/components/MovieCard.tsx
+﻿import type {Movie} from "@/features/movies/types/movie";
+import {motion} from "framer-motion";
+import {Card, CardContent} from "@/components/ui/card";
+import {Link} from "react-router-dom";
+import {createSlug} from "@/lib/createSlug.ts";
 
-import { Link } from "react-router-dom";
-import { createMovieSlug } from "@/lib/createMovieSlug";
-import type {Movie} from "@/features/movies/types/movie.ts";
-
-export function MovieCard({ movie }: { movie: Movie }) {
-    const slug = createMovieSlug(movie.Title, movie.Year, movie.imdbID);
+export function MovieCard({movie}: { movie: Movie }) {
+    const slug = createSlug(movie.Title, movie.imdbID);
 
     return (
         <Link to={`/movie/${slug}`}>
-            <div className="rounded shadow hover:scale-105 transition cursor-pointer">
-                <img src={movie.Poster} alt={movie.Title} className="w-full h-auto" />
-                <div className="p-2">
-                    <h3 className="font-semibold text-sm">{movie.Title}</h3>
-                    <p className="text-xs text-muted-foreground">{movie.Year}</p>
-                </div>
-            </div>
+            <motion.div
+                layout
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.3, ease: "easeOut"}}
+            >
+                <Card className="hover:shadow-lg transition">
+                    <CardContent className="p-0">
+                        <img
+                            src={movie.Poster}
+                            alt={movie.Title}
+                            className="rounded-t-md w-full aspect-[2/3] object-cover"
+                        />
+                        <div className="p-4">
+                            <h3 className="font-bold">{movie.Title}</h3>
+                            <p className="text-sm text-muted-foreground">{movie.Year}</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </Link>
     );
 }
