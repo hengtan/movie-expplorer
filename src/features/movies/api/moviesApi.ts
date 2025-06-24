@@ -2,11 +2,11 @@
 const API_URL = "https://www.omdbapi.com/";
 const API_KEY = "9ad2b907";
 
-export async function fetchMovies(search: string) {
-    const res = await fetch(`${API_URL}?apikey=${API_KEY}&s=${encodeURIComponent(search)}`);
-    const data = await res.json();
+export async function fetchMovies(search: string, page = 1) {
+    const response = await fetch(`${API_URL}?apikey=${API_KEY}&s=${search}&page=${page}`);
+    const data = await response.json();
     if (data.Response === "False") throw new Error(data.Error);
-    return data.Search;
+    return { results: data.Search, total: parseInt(data.totalResults) };
 }
 
 export async function fetchMovieById(id: string) {
@@ -15,3 +15,4 @@ export async function fetchMovieById(id: string) {
     if (data.Response === "False") throw new Error(data.Error);
     return data;
 }
+

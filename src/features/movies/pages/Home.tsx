@@ -1,46 +1,67 @@
-﻿import {useEffect, useState} from "react";
+﻿import {useEffect, useRef, useState} from "react";
 import {fetchMovies} from "@/features/movies/api/moviesApi";
 import {SearchBar} from "@/features/movies/components/SearchBar";
 import {MovieList} from "@/features/movies/components/MovieList";
 import type {Movie} from "@/features/movies/types/movie";
 import {useDebounce} from "@/lib/useDebounce";
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
-import {Loader2, AlertTriangle} from "lucide-react";
-
+import {Loader2} from "lucide-react";
 export default function Home() {
     const [movies, setMovies] = useState<Movie[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
-
+    const [error, setError] = useState<string | null>(null);
     const debouncedQuery = useDebounce(query, 500);
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (debouncedQuery.trim().length >= 3) {
-            handleSearch(debouncedQuery);
-        } else {
+        if (debouncedQuery.trim().length < 3) {
             setMovies([]);
-            setError(null); // limpa erro se limpar a busca
+            setPage(1);
+            setHasMore(true);
+            setError(null);
+            return;
         }
+
+        setPage(1);
+        setMovies([]);
+        loadMovies(debouncedQuery, 1, true);
     }, [debouncedQuery]);
 
-    const handleSearch = async (query: string) => {
+    useEffect(() => {
+        if (!sentinelRef.current || !hasMore) return;
+
+        if (!debouncedQuery || debouncedQuery.length < 3) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && !loading && hasMore) {
+                    loadMovies(debouncedQuery, page + 1);
+                }
+            },
+            { threshold: 1 }
+        );
+
+        observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [sentinelRef.current, loading, hasMore, page, debouncedQuery]);
+
+    const loadMovies = async (search: string, pageToLoad: number, reset = false) => {
         try {
             setLoading(true);
-            setError(null);
+            const delay = new Promise((res) => setTimeout(res, 500));
+            const [{ results, total }] = await Promise.all([
+                fetchMovies(search, pageToLoad),
+                delay,
+            ]);
 
-            const fetchPromise = fetchMovies(query);
-            const delayPromise = new Promise((res) => setTimeout(res, 500));
-            const [results] = await Promise.all([fetchPromise, delayPromise]);
-
-            if (!results || (Array.isArray(results) && results.length === 0)) {
-                throw new Error("Movie not found!");
-            }
-
-            setMovies(results as Movie[]);
+            setMovies((prev) => (reset ? results : [...prev, ...results]));
+            setPage(pageToLoad);
+            setHasMore(results.length > 0 && movies.length + results.length < total);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Erro desconhecido");
-            setMovies([]);
+            setHasMore(false);
         } finally {
             setLoading(false);
         }
@@ -48,42 +69,28 @@ export default function Home() {
 
     return (
         <main className="flex flex-col items-center justify-center min-h-screen px-4 py-10">
-            <div className="w-full max-w-md flex flex-col items-center gap-6">
-                {/* Centralizado com base total do título + ícone */}
-                <div className="relative flex justify-center items-center">
-                    {/* Ícone absoluto à esquerda */}
-                    <span className="absolute left-0 text-4xl">🎬</span>
-                    {/* Título com padding-left para compensar o ícone */}
-                    <h1 className="text-4xl font-bold pl-10">Movie Explorer</h1>
-                </div>
-
-                {/* Input 100% da largura do container */}
-                <div className="w-full">
-                    <SearchBar value={query} onChange={setQuery} />
-                </div>
+            <div className="w-full max-w-md mb-6 text-center">
+                <h1 className="text-4xl font-bold flex justify-center items-center gap-2 mb-4">🎬 Movie Explorer</h1>
+                <SearchBar value={query} onChange={setQuery} />
             </div>
 
-            {/* Resto (loader, erros e resultados) abaixo */}
+            {error && <p className="text-red-500">{error}</p>}
+
+            <MovieList movies={movies} />
+
             {loading && (
-                <div className="flex justify-center items-center h-96">
+                <div className="my-6">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 </div>
             )}
 
-            {!loading && error && (
-                <Alert variant="destructive" className="mt-6 max-w-lg">
-                    <AlertTriangle className="h-5 w-5" />
-                    <AlertTitle>Erro na busca</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
+            {/* Mostrar aviso quando acabar os resultados */}
+            {!hasMore && !loading && movies.length > 0 && (
+                <p className="text-center mt-4 text-muted-foreground">Fim dos resultados.</p>
             )}
 
-            {!loading && !error && movies.length > 0 && (
-                <>
-                    <h2 className="text-xl font-semibold text-center my-6">Resultados:</h2>
-                    <MovieList movies={movies} />
-                </>
-            )}
+            {/* Ref do scroll infinito */}
+            <div ref={sentinelRef} className="h-10" />
         </main>
     );
 }
